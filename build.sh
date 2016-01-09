@@ -60,12 +60,12 @@ echo >&2 "+ cat > '$TMP_DIR/$aptConfPath/docker-no-languages'"
 echo 'Acquire::Languages "none";' > "$TMP_DIR/$aptConfPath/docker-no-languages"
 
 # Add files to base image and import it
-cd $TMP_DIR && tar rf $TMP_DIR/${ARCHIVE_NAME} -P $aptConfPath
+cd $TMP_DIR && tar rf $TMP_DIR/${ARCHIVE_NAME} $aptConfPath/docker-clean $aptConfPath/docker-no-languages
 if [ ! $ON_ARM ]; then
-  tar rf $TMP_DIR/${ARCHIVE_NAME} -P /usr/bin/qemu-arm-static
+  tar rf $TMP_DIR/${ARCHIVE_NAME} -C / usr/bin/qemu-arm-static
 fi
 cat $TMP_DIR/${ARCHIVE_NAME} | $DOCKER_CMD import - $IMAGE_NAME
-rm $TMP_DIR/${ARCHIVE_NAME} $TMP_DIR/$aptConfPath -fR
+rm $TMP_DIR -fR
 
 # Use qemu unless running on armv7l architecture
 if [ ! $ON_ARM=1 -a ! -f /proc/sys/fs/binfmt_misc/arm ]; then

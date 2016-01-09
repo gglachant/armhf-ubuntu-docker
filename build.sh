@@ -11,7 +11,7 @@
 # Fail on error
 set -e
 
-VERSION=${1:-14.04}
+VERSION=${1:-15.10}
 ARCHIVE_NAME=ubuntu-core-$VERSION-core-armhf.tar
 BASE_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu-core/releases/$VERSION/release/${ARCHIVE_NAME}.gz
 

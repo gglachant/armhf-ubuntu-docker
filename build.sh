@@ -14,6 +14,7 @@ set -e
 VERSION=${1:-15.10}
 ARCHIVE_NAME=ubuntu-core-$VERSION-core-armhf.tar
 BASE_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu-core/releases/$VERSION/release/${ARCHIVE_NAME}.gz
+TMP_DIR=`mktemp -d`
 
 # Check if current user is member of docker group and only use sudo if necessary
 DOCKER_CMD=docker
@@ -39,14 +40,14 @@ fi
 echo Building $IMAGE_NAME
 
 # Unzip Ubuntu core image
-curl $BASE_IMAGE_URL | gunzip -c >/tmp/${ARCHIVE_NAME}
+curl $BASE_IMAGE_URL | gunzip -c >$TMP_DIR/${ARCHIVE_NAME}
 
 # Keep us lean by effectively running "apt-get clean" after every install
 aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
 aptConfPath=etc/apt/apt.conf.d
-mkdir -p /tmp/$aptConfPath
-echo >&2 "+ cat > '/tmp/$aptConfPath/docker-clean'"
-cat > "/tmp/$aptConfPath/docker-clean" <<-EOF
+mkdir -p $TMP_DIR/$aptConfPath
+echo >&2 "+ cat > '$TMP_DIR/$aptConfPath/docker-clean'"
+cat > "$TMP_DIR/$aptConfPath/docker-clean" <<-EOF
   DPkg::Post-Invoke { ${aptGetClean} };
   APT::Update::Post-Invoke { ${aptGetClean} };
 
@@ -55,16 +56,16 @@ cat > "/tmp/$aptConfPath/docker-clean" <<-EOF
 EOF
 
 # Remove apt-cache translations for fast "apt-get update"
-echo >&2 "+ cat > '/tmp/$aptConfPath/docker-no-languages'"
-echo 'Acquire::Languages "none";' > "/tmp/$aptConfPath/docker-no-languages"
+echo >&2 "+ cat > '$TMP_DIR/$aptConfPath/docker-no-languages'"
+echo 'Acquire::Languages "none";' > "$TMP_DIR/$aptConfPath/docker-no-languages"
 
 # Add files to base image and import it
-cd /tmp && tar rf /tmp/${ARCHIVE_NAME} -P $aptConfPath
+cd $TMP_DIR && tar rf $TMP_DIR/${ARCHIVE_NAME} -P $aptConfPath
 if [ ! $ON_ARM ]; then
-  tar rf /tmp/${ARCHIVE_NAME} -P /usr/bin/qemu-arm-static
+  tar rf $TMP_DIR/${ARCHIVE_NAME} -P /usr/bin/qemu-arm-static
 fi
-cat /tmp/${ARCHIVE_NAME} | $DOCKER_CMD import - $IMAGE_NAME
-rm /tmp/${ARCHIVE_NAME} /tmp/$aptConfPath -fR
+cat $TMP_DIR/${ARCHIVE_NAME} | $DOCKER_CMD import - $IMAGE_NAME
+rm $TMP_DIR/${ARCHIVE_NAME} $TMP_DIR/$aptConfPath -fR
 
 # Use qemu unless running on armv7l architecture
 if [ ! $ON_ARM=1 -a ! -f /proc/sys/fs/binfmt_misc/arm ]; then

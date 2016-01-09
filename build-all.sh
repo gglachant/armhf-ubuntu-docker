@@ -24,22 +24,28 @@ fi
 
 echo Using $IMAGE_NAME as a base image name
 
-./build.sh 14.04 $IMAGE_NAME
-sudo docker push $IMAGE_NAME:14.04
-sudo docker tag -f $IMAGE_NAME:14.04 $IMAGE_NAME:latest
+./build.sh 15.10 $IMAGE_NAME
+sudo docker push $IMAGE_NAME:15.10
+sudo docker tag -f $IMAGE_NAME:15.10 $IMAGE_NAME:latest
 sudo docker push $IMAGE_NAME:latest
-sudo docker tag -f $IMAGE_NAME:14.04 $IMAGE_NAME:trusty
+sudo docker tag -f $IMAGE_NAME:15.10 $IMAGE_NAME:wily
+sudo docker push $IMAGE_NAME:wily
+
+./build.sh 15.04
+sudo docker push $IMAGE_NAME:15.04
+sudo docker tag -f $IMAGE_NAME:15.04 $IMAGE_NAME:vivid
+sudo docker push $IMAGE_NAME:vivid
+
+./build.sh 14.04.3
+sudo docker push $IMAGE_NAME:14.04.3
+sudo docker tag -f $IMAGE_NAME:14.04.3 $IMAGE_NAME:14.04
 sudo docker push $IMAGE_NAME:trusty
+sudo docker tag -f $IMAGE_NAME:14.04.3 $IMAGE_NAME:trusty
 
-./build.sh 13.10
-sudo docker push $IMAGE_NAME:13.10
-sudo docker tag -f $IMAGE_NAME:13.10 $IMAGE_NAME:saucy
-sudo docker push $IMAGE_NAME:saucy
-
-./build.sh 12.04.4
-sudo docker tag -f $IMAGE_NAME:12.04.4 $IMAGE_NAME:12.04
-sudo docker push $IMAGE_NAME:12.04
-sudo docker tag -f $IMAGE_NAME:12.04.4 $IMAGE_NAME:precise
+./build.sh 12.04.5
+sudo docker push $IMAGE_NAME:12.04.5
+sudo docker tag -f $IMAGE_NAME:12.04.5 $IMAGE_NAME:12.04
 sudo docker push $IMAGE_NAME:precise
+sudo docker tag -f $IMAGE_NAME:12.04.5 $IMAGE_NAME:precise
 
 echo Successfully pushed all images to $IMAGE_NAME

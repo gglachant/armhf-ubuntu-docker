@@ -15,37 +15,43 @@
 # Fail on error
 set -e
 
+# Check if current user is member of docker group and only use sudo if necessary
+DOCKER_CMD=docker
+if ! id -Gn | grep -qw 'docker'; then
+  DOCKER_CMD=sudo $DOCKER_CMD
+fi
+
 if [ -n "$1" ]; then
   IMAGE_NAME=$1
 else
-  DOCKER_USER=$(sudo docker info | grep Username | awk '{print $2;}')
+  DOCKER_USER=$($DOCKER_CMD info | grep Username | awk '{print $2;}')
   IMAGE_NAME=$DOCKER_USER/armhf-ubuntu
 fi
 
 echo Using $IMAGE_NAME as a base image name
 
 ./build.sh 15.10 $IMAGE_NAME
-sudo docker push $IMAGE_NAME:15.10
-sudo docker tag -f $IMAGE_NAME:15.10 $IMAGE_NAME:latest
-sudo docker push $IMAGE_NAME:latest
-sudo docker tag -f $IMAGE_NAME:15.10 $IMAGE_NAME:wily
-sudo docker push $IMAGE_NAME:wily
+$DOCKER_CMD push $IMAGE_NAME:15.10
+$DOCKER_CMD tag -f $IMAGE_NAME:15.10 $IMAGE_NAME:latest
+$DOCKER_CMD push $IMAGE_NAME:latest
+$DOCKER_CMD tag -f $IMAGE_NAME:15.10 $IMAGE_NAME:wily
+$DOCKER_CMD push $IMAGE_NAME:wily
 
 ./build.sh 15.04
-sudo docker push $IMAGE_NAME:15.04
-sudo docker tag -f $IMAGE_NAME:15.04 $IMAGE_NAME:vivid
-sudo docker push $IMAGE_NAME:vivid
+$DOCKER_CMD push $IMAGE_NAME:15.04
+$DOCKER_CMD tag -f $IMAGE_NAME:15.04 $IMAGE_NAME:vivid
+$DOCKER_CMD push $IMAGE_NAME:vivid
 
 ./build.sh 14.04.3
-sudo docker push $IMAGE_NAME:14.04.3
-sudo docker tag -f $IMAGE_NAME:14.04.3 $IMAGE_NAME:14.04
-sudo docker push $IMAGE_NAME:trusty
-sudo docker tag -f $IMAGE_NAME:14.04.3 $IMAGE_NAME:trusty
+$DOCKER_CMD push $IMAGE_NAME:14.04.3
+$DOCKER_CMD tag -f $IMAGE_NAME:14.04.3 $IMAGE_NAME:14.04
+$DOCKER_CMD push $IMAGE_NAME:trusty
+$DOCKER_CMD tag -f $IMAGE_NAME:14.04.3 $IMAGE_NAME:trusty
 
 ./build.sh 12.04.5
-sudo docker push $IMAGE_NAME:12.04.5
-sudo docker tag -f $IMAGE_NAME:12.04.5 $IMAGE_NAME:12.04
-sudo docker push $IMAGE_NAME:precise
-sudo docker tag -f $IMAGE_NAME:12.04.5 $IMAGE_NAME:precise
+$DOCKER_CMD push $IMAGE_NAME:12.04.5
+$DOCKER_CMD tag -f $IMAGE_NAME:12.04.5 $IMAGE_NAME:12.04
+$DOCKER_CMD push $IMAGE_NAME:precise
+$DOCKER_CMD tag -f $IMAGE_NAME:12.04.5 $IMAGE_NAME:precise
 
 echo Successfully pushed all images to $IMAGE_NAME

@@ -15,6 +15,12 @@ VERSION=${1:-15.10}
 ARCHIVE_NAME=ubuntu-core-$VERSION-core-armhf.tar
 BASE_IMAGE_URL=http://cdimage.ubuntu.com/ubuntu-core/releases/$VERSION/release/${ARCHIVE_NAME}.gz
 
+# Check if current user is member of docker group and only use sudo if necessary
+DOCKER_CMD=docker
+if ! id -Gn | grep -qw 'docker'; then
+  DOCKER_CMD=sudo $DOCKER_CMD
+fi
+
 # Check if running on armv7l architecture
 if [ $(uname -m) = "armv7l" ]; then
   ON_ARM=1
@@ -26,7 +32,7 @@ echo ARM: $ON_ARM
 if [ -n "$2" ]; then
   IMAGE_NAME=$2:$VERSION
 else
-  DOCKER_USER=$(sudo docker info | grep Username | awk '{print $2;}')
+  DOCKER_USER=$($DOCKER_CMD info | grep Username | awk '{print $2;}')
   IMAGE_NAME=$DOCKER_USER/armhf-ubuntu:$VERSION
 fi
 
@@ -57,7 +63,7 @@ cd /tmp && tar rf /tmp/${ARCHIVE_NAME} -P $aptConfPath
 if [ ! $ON_ARM ]; then
   tar rf /tmp/${ARCHIVE_NAME} -P /usr/bin/qemu-arm-static
 fi
-cat /tmp/${ARCHIVE_NAME} | sudo docker import - $IMAGE_NAME
+cat /tmp/${ARCHIVE_NAME} | $DOCKER_CMD import - $IMAGE_NAME
 rm /tmp/${ARCHIVE_NAME} /tmp/$aptConfPath -fR
 
 # Use qemu unless running on armv7l architecture
@@ -72,9 +78,9 @@ UPDATE_SCRIPT="dpkg-divert --local --rename --add /sbin/initctl && \
                echo 'udev hold' | dpkg --set-selections && \
                sed -i -e 's/# \(.*universe\)$/\1/' /etc/apt/sources.list && \
                export DEBIAN_FRONTEND=noninteractive; apt-get update && apt-get -y upgrade"
-CID=`sudo docker run -d $IMAGE_NAME sh -c "$UPDATE_SCRIPT"`
-sudo docker attach $CID
-sudo docker commit $CID $IMAGE_NAME
-sudo docker rm $CID
+CID=`$DOCKER_CMD run -d $IMAGE_NAME sh -c "$UPDATE_SCRIPT"`
+$DOCKER_CMD attach $CID
+$DOCKER_CMD commit $CID $IMAGE_NAME
+$DOCKER_CMD rm $CID
 
 echo "Successfully built image $IMAGE_NAME."
